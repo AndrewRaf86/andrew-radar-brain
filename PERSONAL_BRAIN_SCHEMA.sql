@@ -23,11 +23,11 @@ create table if not exists youtube_channels (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   yt_channel_id text,
-  channel_url text,
-  category text not null,
+  rss_url text,
+  url text,
+  category text,
   priority int default 3,
   is_active boolean default true,
-  last_checked_at timestamptz,
   created_at timestamptz default now()
 );
 
@@ -37,19 +37,16 @@ create table if not exists youtube_videos (
   id uuid primary key default gen_random_uuid(),
   channel_id uuid references youtube_channels(id),
   yt_video_id text unique,
+  channel_name text,
   title text not null,
   url text not null,
-  channel_name text,
+  transcript text,
+  summary text,
+  takeaways text[],
+  action_items text[],
   category text,
   published_at timestamptz,
-  transcript text,
-  transcript_status text default 'missing',
-  summary text,
-  key_takeaways text[],
-  action_items text[],
-  summary_status text default 'missing',
-  ingested_at timestamptz default now(),
-  updated_at timestamptz default now()
+  ingested_at timestamptz default now()
 );
 
 alter table youtube_videos enable row level security;
@@ -77,5 +74,10 @@ create table if not exists brain_queries (
 
 alter table brain_queries enable row level security;
 
+-- Correct table names used by the app:
+-- brain_conversations
+-- youtube_channels
+-- youtube_videos
+--
 -- Do not create unsafe public policies.
 -- Do not use a service role key in the frontend.

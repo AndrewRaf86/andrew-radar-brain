@@ -1,24 +1,28 @@
 # Andrew Radar Brain
 
-Andrew Radar Brain is now a Telegram-first personal AI brain. The main interface is a Telegram bot that Andrew can message from his phone. The long-term knowledge layer is selected YouTube channels across:
+Andrew Radar Brain is a Telegram-first personal AI brain. Telegram is the main interface; the YouTube Brain is the knowledge layer that will store selected YouTube channel videos, transcripts, summaries, and searchable notes across:
 
 - AI Brain
 - Dating Brain
 - Fitness/Food Brain
 
-The goal is to ask the bot questions and eventually get answers from saved YouTube transcripts, summaries, and searchable knowledge.
+## Current Status
 
-## Current Version
+- Telegram webhook receives messages and sends replies when `TELEGRAM_BOT_TOKEN` is set.
+- Telegram parses text, captions, photo metadata, and voice metadata.
+- YouTube RSS ingestion now scans Supabase `youtube_channels` rows and saves new video metadata into `youtube_videos`.
+- Search uses simple text matching against saved `youtube_videos`.
+- Transcript extraction, AI summaries, embeddings, voice transcription, and image vision are not active yet.
 
-- Telegram webhook can receive and reply to text messages when `TELEGRAM_BOT_TOKEN` is configured.
-- Telegram webhook parses photo and voice metadata.
-- Photo understanding is not active yet.
-- Voice transcription is not active yet.
-- Brain routing is local/mock and does not use a paid AI API.
-- Supabase schema is ready for conversations, YouTube channels, videos, chunks, and queries.
-- YouTube RSS scan foundation exists.
-- Transcript extraction is not active yet.
-- Search is simple text matching before embeddings/vector search.
+## Correct Supabase Table Names
+
+The app expects these table names exactly:
+
+- `brain_conversations`
+- `youtube_channels`
+- `youtube_videos`
+
+Do not use `youtubevideos` or `youtubeVideos`.
 
 ## Run Locally
 
@@ -27,8 +31,6 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
-
 Quality checks:
 
 ```bash
@@ -36,56 +38,40 @@ npm run lint
 npm run build
 ```
 
-## Telegram Bot Setup
+## Telegram Setup
 
 1. Create a Telegram bot with BotFather.
-2. Copy the bot token.
-3. Add the token to Vercel environment variables:
+2. Add the bot token to Vercel:
 
 ```bash
 TELEGRAM_BOT_TOKEN=your-telegram-token
 ```
 
-4. Set the webhook to your deployed Vercel URL:
+3. Set the webhook:
 
 ```bash
-https://api.telegram.org/botYOUR_TOKEN/setWebhook?url=https://YOUR_VERCEL_DOMAIN/api/telegram/webhook
+https://api.telegram.org/botYOUR_TOKEN/setWebhook?url=https://andrew-radar-brain.vercel.app/api/telegram/webhook
 ```
 
-5. Send the bot a Telegram message.
+If the token is missing, the app returns a safe error and never hardcodes secrets.
 
-The webhook route is:
+## Supabase Setup
+
+Run:
 
 ```text
-src/app/api/telegram/webhook/route.ts
+PERSONAL_BRAIN_SCHEMA.sql
 ```
 
-It sends a Telegram reply with `sendMessage`. If `TELEGRAM_BOT_TOKEN` is missing, the route returns a safe error and does not expose secrets.
-
-## YouTube Brain
-
-The YouTube Brain is the knowledge layer for selected channels. It will eventually contain channel metadata, videos, transcripts, summaries, chunks, and search results.
-
-Simple setup flow:
-
-1. Run `PERSONAL_BRAIN_SCHEMA.sql` in Supabase.
-2. Add rows to `youtube_channels`.
-3. Run `POST /api/youtube/scan`.
-4. Add transcripts manually for now.
-5. Run `POST /api/youtube/summarize`.
-6. Ask from Telegram or search with `POST /api/brain/search`.
-
-The simple page `/youtube-brain` explains this flow in the app.
-
-## Supabase Plan
-
-The Supabase browser client is in:
+Optional starter rows:
 
 ```text
-src/lib/supabase.ts
+YOUTUBE_CHANNELS_SEED.sql
 ```
 
-Add public client env vars when ready:
+Important: `YOUTUBE_CHANNELS_SEED.sql` uses `null` for `yt_channel_id`. Fill in real YouTube channel IDs manually before RSS ingestion can work.
+
+Required environment variables:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
@@ -94,63 +80,95 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
 Do not put a Supabase service role key in the frontend.
 
-Schemas:
+## YouTube RSS Ingestion
 
-- `PERSONAL_BRAIN_SCHEMA.sql`: Telegram conversations and YouTube knowledge tables.
-- `SUPABASE_SCHEMA.sql`: older dashboard-ready tables.
-- `CAPTURES_SCHEMA.sql`: local/web capture table draft.
+The app now supports:
 
-RLS is enabled in schema files. Add safe private-user policies before public use.
+```text
+Supabase youtube_channels -> YouTube RSS -> Supabase youtube_videos
+```
 
-## Test Endpoints
+Each active `youtube_channels` row should have either:
+
+- `yt_channel_id`, or
+- `rss_url`
+
+The RSS URL format is:
+
+```text
+https://www.youtube.com/feeds/videos.xml?channel_id=CHANNEL_ID
+```
+
+Scan endpoint:
+
+```text
+/api/youtube/scan
+```
+
+Test in browser:
+
+```text
+https://andrew-radar-brain.vercel.app/api/youtube/scan
+```
+
+Test in Terminal:
+
+```bash
+curl https://andrew-radar-brain.vercel.app/api/youtube/scan
+```
+
+The endpoint returns:
+
+- `ok`
+- `channelsScanned`
+- `videosFound`
+- `videosInserted`
+- `skippedDuplicates`
+- `errors`
+
+Current limitation: RSS ingestion saves video metadata only. Transcript extraction and AI summaries come next.
+
+## Brain Search Limitation
+
+Telegram works now, but YouTube knowledge only works after:
+
+1. Supabase tables exist.
+2. `youtube_channels` has real channel IDs or RSS URLs.
+3. `/api/youtube/scan` has saved videos into `youtube_videos`.
+
+If no saved videos exist, Telegram still gives a general answer and says saved video knowledge is not connected yet.
+
+## Useful Test Endpoints
 
 Health:
 
 ```bash
-curl https://YOUR_VERCEL_DOMAIN/api/health
-```
-
-Telegram webhook locally or with a test payload:
-
-```bash
-curl -X POST http://localhost:3000/api/telegram/webhook \
-  -H "content-type: application/json" \
-  -d '{"message":{"chat":{"id":"123"},"from":{"id":"456"},"text":"Claude Codex workflow for YouTube transcripts"}}'
-```
-
-YouTube RSS scan:
-
-```bash
-curl -X POST http://localhost:3000/api/youtube/scan
+curl https://andrew-radar-brain.vercel.app/api/health
 ```
 
 Brain search:
 
 ```bash
-curl -X POST http://localhost:3000/api/brain/search \
+curl -X POST https://andrew-radar-brain.vercel.app/api/brain/search \
   -H "content-type: application/json" \
   -d '{"query":"What should I learn about AI agents?","category":"AI Brain"}'
 ```
 
-Mock summarization:
+Mock summarize:
 
 ```bash
-curl -X POST http://localhost:3000/api/youtube/summarize \
+curl -X POST https://andrew-radar-brain.vercel.app/api/youtube/summarize \
   -H "content-type: application/json" \
-  -d '{"title":"Example video","notes":"Manual transcript notes","category":"AI Brain"}'
+  -d '{"title":"Example video","notes":"Manual notes","category":"AI Brain"}'
 ```
 
 ## Future Steps
 
 1. Add Gemini Flash API for real responses and summaries.
-2. Add real Supabase conversation writes with proper RLS policies.
+2. Add stronger Supabase write policies.
 3. Add YouTube transcript extraction.
 4. Add embeddings/vector search.
 5. Add daily cron ingestion.
 6. Add Telegram daily digest.
 7. Add image vision.
 8. Add voice transcription.
-
-## Existing App
-
-The existing dashboard pages and `/brain-chat` still exist. They are no longer the main product focus; Telegram is now the primary interface.

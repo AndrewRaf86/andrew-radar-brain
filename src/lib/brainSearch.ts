@@ -12,6 +12,7 @@ export type BrainSearchResult = {
   }>;
   category: BrainCategory;
   hasSupabase: boolean;
+  searchFailed?: boolean;
 };
 
 type VideoRow = {
@@ -22,9 +23,12 @@ type VideoRow = {
   category?: string;
   transcript?: string;
   summary?: string;
-  key_takeaways?: string[];
+  takeaways?: string[];
   action_items?: string[];
 };
+
+const noKnowledgeMessage =
+  "No saved YouTube knowledge found yet. Add channels/videos or run ingestion first.";
 
 export async function searchBrainKnowledge({
   query,
@@ -35,7 +39,7 @@ export async function searchBrainKnowledge({
 }): Promise<BrainSearchResult> {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return {
-      answer: `${generateBrainReply(query, category)}\n\nI do not have enough saved video knowledge yet. Add channels and run ingestion first.`,
+      answer: `${generateBrainReply(query, category)}\n\n${noKnowledgeMessage}`,
       matchedVideos: [],
       category,
       hasSupabase: false,
@@ -53,7 +57,7 @@ export async function searchBrainKnowledge({
 
   let request = supabase
     .from("youtube_videos")
-    .select("id,title,url,channel_name,category,transcript,summary,key_takeaways,action_items")
+    .select("id,title,url,channel_name,category,transcript,summary,takeaways,action_items")
     .limit(100);
 
   if (category !== "General") {
@@ -62,8 +66,19 @@ export async function searchBrainKnowledge({
 
   const { data, error } = await request;
   if (error || !data) {
+    console.error("youtube_videos search failed", error);
     return {
-      answer: `${generateBrainReply(query, category)}\n\nI could not search saved video knowledge yet: ${error?.message ?? "no data"}.`,
+      answer: `${generateBrainReply(query, category)}\n\n${noKnowledgeMessage}`,
+      matchedVideos: [],
+      category,
+      hasSupabase: true,
+      searchFailed: true,
+    };
+  }
+
+  if (!data.length) {
+    return {
+      answer: `${generateBrainReply(query, category)}\n\n${noKnowledgeMessage}`,
       matchedVideos: [],
       category,
       hasSupabase: true,
@@ -78,10 +93,13 @@ export async function searchBrainKnowledge({
     .filter((video) => {
       const searchText = [
         video.title,
+        video.channel_name,
+        video.url,
         video.summary,
         video.transcript,
-        ...(video.key_takeaways ?? []),
+        ...(video.takeaways ?? []),
         ...(video.action_items ?? []),
+        video.category,
       ]
         .join(" ")
         .toLowerCase();
@@ -99,7 +117,7 @@ export async function searchBrainKnowledge({
   const titles = matchedVideos.map((video) => `- ${video.title}`).join("\n");
   const knowledgeNote = matchedVideos.length
     ? `\n\nSaved video matches:\n${titles}`
-    : "\n\nI do not have enough saved video knowledge yet. Add channels and run ingestion first.";
+    : `\n\n${noKnowledgeMessage}`;
 
   return {
     answer: `${generateBrainReply(query, category)}${knowledgeNote}`,

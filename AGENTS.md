@@ -8,13 +8,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 <claude-mem-context>
 # Memory Context
 
-# [andrew-radar-brain] recent context, 2026-05-19 3:15pm GMT-5
+# [andrew-radar-brain] recent context, 2026-05-19 3:27pm GMT-5
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 15 obs (7,974t read) | 214,470t work | 96% savings
+Stats: 27 obs (13,324t read) | 624,231t work | 98% savings
 
 ### May 19, 2026
 124 11:38a ⚖️ Andrew Radar Brain — v1 Architecture and Scope Defined
@@ -32,6 +32,18 @@ Stats: 15 obs (7,974t read) | 214,470t work | 96% savings
 159 2:38p 🔵 Andrew Radar Brain — /brain-chat and /api/brain-chat Verified Live via curl
 163 2:39p ✅ Andrew Radar Brain — Brain Chat Send Button Mobile Layout Fixed
 164 2:41p 🟣 Andrew Radar Brain — Brain Chat Upgrade Fully Verified and Ready to Commit
+170 3:16p ⚖️ Andrew Radar Brain — Pivot to Telegram-First YouTube Knowledge Brain
+171 " 🟣 Andrew Radar Brain — Planned Supabase Schema for Personal Brain
+172 " 🟣 Andrew Radar Brain — Planned Telegram Bot Reply Infrastructure
+173 " 🟣 Andrew Radar Brain — Planned YouTube Ingestion Foundation
+183 3:17p 🔵 Andrew Radar Brain — Existing Codebase State Before Pivot
+184 " 🟣 Andrew Radar Brain — Four Core Lib Files Created
+189 3:19p 🟣 Andrew Radar Brain — youtubeIngestion.ts Created with RSS Feed Parser
+190 " 🟣 Andrew Radar Brain — Four New API Routes Created
+191 " 🟣 Andrew Radar Brain — Telegram Webhook Replaced with Real Reply Logic
+192 " 🟣 Andrew Radar Brain — SQL Schema, YouTube Brain Page, and Nav Tab Added
+193 " ✅ Andrew Radar Brain — README Fully Rewritten for Telegram-First Architecture
+194 3:22p 🔵 Andrew Radar Brain — Full Build Passes, Smoke Tests Confirm API Behavior
 
-Access 214k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 624k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>

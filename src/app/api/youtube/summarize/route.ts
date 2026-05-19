@@ -27,13 +27,10 @@ export async function POST(request: Request) {
       .from("youtube_videos")
       .update({
         transcript,
-        transcript_status: transcript ? "manual" : "missing",
         summary: generated.summary,
-        key_takeaways: generated.key_takeaways,
+        takeaways: generated.takeaways,
         action_items: generated.action_items,
-        summary_status: "mock",
         category: generated.category,
-        updated_at: new Date().toISOString(),
       })
       .eq("id", videoId);
   }

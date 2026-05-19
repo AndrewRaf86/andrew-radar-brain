@@ -94,7 +94,7 @@ async function buildTelegramReply({
     ];
 
     if (text) {
-      const search = await searchBrainKnowledge({ query: text, category: brainUsed });
+      const search = await safeSearchBrainKnowledge(text, brainUsed);
       return [
         ...base,
         "I can still use your caption:",
@@ -109,11 +109,39 @@ async function buildTelegramReply({
   }
 
   if (inputType === "text" && text) {
-    const search = await searchBrainKnowledge({ query: text, category: brainUsed });
+    const search = await safeSearchBrainKnowledge(text, brainUsed);
     return search.answer;
   }
 
   return generateBrainReply(text || "Unknown Telegram input", brainUsed);
+}
+
+async function safeSearchBrainKnowledge(query: string, category: BrainCategory) {
+  try {
+    const search = await searchBrainKnowledge({ query, category });
+    if (search.searchFailed) {
+      return {
+        ...search,
+        answer: [
+          generateBrainReply(query, category),
+          "I can answer generally right now, but I do not have saved video knowledge connected yet.",
+        ].join("\n\n"),
+      };
+    }
+    return search;
+  } catch (error) {
+    console.error("Telegram brain search failed", error);
+    return {
+      answer: [
+        generateBrainReply(query, category),
+        "I can answer generally right now, but I do not have saved video knowledge connected yet.",
+      ].join("\n\n"),
+      matchedVideos: [],
+      category,
+      hasSupabase: false,
+      searchFailed: true,
+    };
+  }
 }
 
 async function readTelegramUpdate(request: Request): Promise<TelegramUpdate | null> {

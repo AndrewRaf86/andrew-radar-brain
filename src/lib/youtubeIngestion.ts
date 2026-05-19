@@ -6,8 +6,9 @@ export type YouTubeBrainCategory =
 export type YouTubeChannel = {
   id?: string;
   name: string;
-  yt_channel_id: string;
-  channel_url?: string;
+  yt_channel_id?: string;
+  rss_url?: string;
+  url?: string;
   category: YouTubeBrainCategory;
   priority?: number;
   is_active?: boolean;
@@ -101,7 +102,7 @@ export function generateMockTranscriptSummary(input: {
 
   return {
     summary: `${input.title}: ${preview || "No transcript provided yet."}`,
-    key_takeaways: [
+    takeaways: [
       "This is a mock summary until a real transcript and AI summarizer are connected.",
       `Category signal: ${category}.`,
       "Save the useful idea, then decide whether it creates a repeatable action.",
