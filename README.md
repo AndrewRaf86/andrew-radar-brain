@@ -1,97 +1,121 @@
 # Andrew Radar Brain
 
-Andrew Radar Brain is a private dashboard for organizing YouTube subscription intelligence into three focused brains:
+Andrew Radar Brain is a private personal intelligence dashboard for organizing YouTube, message, idea, fitness, food, and workflow signals into three brains:
 
 - AI Brain
 - Dating Brain
 - Fitness/Food Brain
 
-v1 is intentionally simple: a polished Next.js dashboard shell with typed mock data, a Supabase-ready client, and future ingestion/reporting screens. There is no YouTube API, no real transcript ingestion, no auth, and no large backend.
+The app is intentionally local-first right now. It has a polished Next.js dashboard, mock channel/video data, conversational Brain Chat, local browser memory, and Supabase/Telegram-ready structure without paid AI calls, auth, or a large backend.
 
-## Run locally
+## How to run locally
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-Useful checks:
+Quality checks:
 
 ```bash
 npm run lint
 npm run build
 ```
 
-## Deploy to Vercel
+## How Brain Chat works now
 
-1. Push the repo to GitHub.
-2. Import the repo in Vercel.
-3. Use the default Next.js build settings.
-4. Deploy.
+Open `/brain-chat` and paste or type a signal: screenshot context, dating messages, WhatsApp or Bumble/Tinder messages, AI tool ideas, business problems, YouTube links, transcript notes, fitness notes, food notes, gut health notes, workout notes, or supplement notes.
 
-The app works without Supabase environment variables because it falls back to mock data.
+Brain Chat is currently a mock conversational system:
 
-## Mock Brain Chat
+- It detects the best brain with keyword rules.
+- It generates a conversational local response.
+- It saves the user message and assistant response in browser memory.
+- It saves useful captures through `src/lib/captures.ts`.
+- It does not call a paid AI API yet.
 
-Open `/brain-chat` to use the local-first capture system. Paste a YouTube link, screenshot context, dating message, business idea, AI tool idea, fitness note, food note, gut health note, or workout note.
+The shared chat logic lives in `src/lib/brainChat.ts`. The web page uses it directly, and the future API routes use it too.
 
-The page currently uses simple local rules instead of a paid AI API:
+## LocalStorage chat memory
 
-- AI terms like Claude, Codex, automation, agents, prompts, API, coding, app, dashboard, or business idea classify as AI Brain.
-- Dating terms like girl, Bumble, WhatsApp, message, attraction, date, text, kiss, or relationship classify as Dating.
-- Fitness and food terms like workout, protein, gut, boxing, recipe, supplement, meal, sleep, recovery, calories, muscle, or fat loss classify as Fitness/Food.
-- Anything else is saved as a General Signal.
+Chat history is saved in browser `localStorage` under:
 
-Each processed signal returns a mock response with detected category, likely meaning, recommended next action, saved note preview, and a priority score from 1 to 5.
+```text
+andrew-radar-brain-chat
+```
 
-## LocalStorage persistence
+Recent captures are saved under:
 
-Brain Chat saves recent captures in browser `localStorage` under `andrew-radar-brain-captures`. This keeps the feature useful locally without Supabase or auth. Clearing browser storage removes the saved captures.
+```text
+andrew-radar-brain-captures
+```
 
-## Add Supabase later
+The `Clear chat` button clears only chat history. It does not delete recent captures.
 
-Create a Supabase project and add these environment variables in `.env.local` and Vercel:
+## Image uploads now
+
+Brain Chat accepts image files from the upload button. It shows the selected filename and a small preview when the browser can read the image.
+
+The uploaded filename is stored with the local chat message. Image understanding is mocked until an AI vision API is connected, so the app does not actually inspect the image contents yet.
+
+## Future Telegram Bot Plan
+
+Telegram is scaffolded but not active.
+
+1. Create a Telegram bot with BotFather.
+2. Add `TELEGRAM_BOT_TOKEN` to Vercel environment variables.
+3. Use the Vercel deployed URL plus `/api/telegram/webhook` as the webhook endpoint.
+4. Later the webhook will save incoming Telegram messages to Supabase captures.
+5. Later the webhook will send AI responses back to Telegram.
+
+Current route:
+
+```text
+src/app/api/telegram/webhook/route.ts
+```
+
+It accepts Telegram-like POST payloads, extracts message text, runs the same local mock brain response, and returns JSON. It does not call Telegram APIs or require a token yet.
+
+## Future Supabase Plan
+
+The Supabase browser client is in `src/lib/supabase.ts` and safely exports `null` when env vars are missing.
+
+Later, add these public client env vars:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-Do not put a Supabase service role key in the frontend. This app only uses the public anon key pattern in `src/lib/supabase.ts`, and exports `null` when the variables are missing.
+Do not put a Supabase service role key in the frontend.
 
-The future table draft lives in `SUPABASE_SCHEMA.sql`. Row level security is enabled there, but real policies must be added before public use.
+Schema drafts:
 
-Captures have their own future migration in `CAPTURES_SCHEMA.sql`. To connect Brain Chat to Supabase later:
+- `SUPABASE_SCHEMA.sql` for channels, videos, insights, and reports.
+- `CAPTURES_SCHEMA.sql` for captures.
 
-1. Run `CAPTURES_SCHEMA.sql` in Supabase.
-2. Add safe private-user row level security policies.
-3. Replace `saveCaptureLocal()` with an insert into `captures`.
-4. Replace `getCapturesLocal()` with a query from `captures`.
+Captures can later be inserted from web Brain Chat, Telegram webhook, future YouTube transcript ingestion, and future mobile capture tools. Row level security is enabled in the SQL drafts, but safe private-user policies must be added before public use.
 
-## Connect an AI API later
+## Future AI API Plan
 
-The mock response logic lives in `src/lib/captures.ts` as `generateMockBrainResponse()`. Later, keep the same page UI and replace that function with a server-side API route that calls the chosen model. Keep private API keys server-side only and return the same response shape to the client.
+The mock response function is `generateMockChatResponse()` in `src/lib/brainChat.ts`.
 
-## What is v1
+Later, replace the mock logic with a server-side AI call from an API route. Keep private AI keys server-side only. The page can keep the same response shape and UI while the backend switches from local rules to real model responses.
 
-- Dark responsive dashboard
-- Three brain sections
-- Tracked channel lists
-- Mock radar videos and actions
-- Visual ingestion inbox
-- Interactive local Brain Chat
-- Mock report cards
-- Supabase-ready structure
+The dormant web API route is:
 
-## What comes later
+```text
+src/app/api/brain-chat/route.ts
+```
 
-- YouTube URL capture
-- Transcript ingestion
-- RSS or subscription feed imports
-- Supabase persistence
-- Real AI response generation
-- Search and filtering
-- Weekly reports
-- Private auth
+It already accepts text, selected brain, intent, and optional image filename, then returns a mock brain response as JSON.
+
+## Deploy to Vercel
+
+1. Push the repo to GitHub.
+2. Import the repo in Vercel.
+3. Use the default Next.js build settings.
+4. Add Supabase or Telegram env vars only when those features are ready.
+5. Deploy.

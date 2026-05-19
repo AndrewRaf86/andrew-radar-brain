@@ -19,3 +19,8 @@ alter table captures enable row level security;
 
 -- Do not create unsafe public policies.
 -- Do not use a Supabase service role key in the frontend.
+-- Future capture sources can include:
+-- - web Brain Chat
+-- - Telegram webhook
+-- - YouTube transcript ingestion
+-- - mobile capture tools
