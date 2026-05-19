@@ -11,7 +11,7 @@ export default function FitnessFoodPage() {
   return (
     <div className="space-y-8">
       <section className="max-w-4xl">
-        <h1 className="text-4xl font-bold tracking-tight text-white">Fitness/Food Brain</h1>
+        <h1 className="text-4xl font-bold tracking-tight text-white">Health/Fitness/Food Brain</h1>
         <p className="mt-4 text-lg leading-8 text-zinc-400">
           This brain is for fitness, food, boxing, longevity, gut health, meal prep, supplements, and training. It helps Andrew turn content into practical weekly actions.
         </p>
@@ -27,7 +27,7 @@ export default function FitnessFoodPage() {
       <ChannelList channels={channels} />
 
       <section>
-        <h2 className="text-2xl font-bold text-white">Fitness/Food mock videos</h2>
+        <h2 className="text-2xl font-bold text-white">Health/Fitness/Food mock videos</h2>
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           {videos.map((video) => (
             <VideoCard key={video.id} video={video} />

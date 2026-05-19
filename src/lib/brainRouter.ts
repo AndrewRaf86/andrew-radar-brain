@@ -1,7 +1,7 @@
 export type BrainCategory =
   | "AI Brain"
   | "Dating Brain"
-  | "Fitness/Food Brain"
+  | "Health/Fitness/Food Brain"
   | "General";
 
 const aiTerms = [
@@ -18,10 +18,25 @@ const aiTerms = [
   "workflow",
   "business idea",
   "youtube transcript",
+  "gemini",
+  "chatgpt",
   "dashboard",
   "app",
   "coding",
+  "seo",
+  "no-code",
+  "low-code",
+  "mcp",
+  "cursor",
+  "lovable",
+  "replit",
   "prompt",
+  "prompts",
+  "rag",
+  "embeddings",
+  "vector",
+  "startup",
+  "saas",
 ];
 
 const datingTerms = [
@@ -36,14 +51,26 @@ const datingTerms = [
   "attraction",
   "girlfriend",
   "spanish reply",
-  "text her",
+  "text",
   "reply to her",
+  "relationship",
+  "flirting",
+  "reply",
+  "women",
+  "woman",
+  "charisma",
+  "confidence",
+  "approach",
+  "social skills",
+  "attachment",
+  "breakup",
 ];
 
 const fitnessTerms = [
+  "health",
+  "fitness",
   "workout",
   "gym",
-  "boxing",
   "protein",
   "calories",
   "supplement",
@@ -55,15 +82,29 @@ const fitnessTerms = [
   "sleep",
   "fat loss",
   "muscle",
+  "nutrition",
+  "cooking",
   "stomach",
   "diet",
+  "mobility",
+  "pain",
+  "training",
+  "conditioning",
+  "longevity",
+  "hormones",
+  "peptides",
+  "meal prep",
+  "high protein",
+  "boxing",
+  "footwork",
+  "cardio",
 ];
 
 export function detectBrainCategory(input: string): BrainCategory {
   const text = input.toLowerCase();
   if (aiTerms.some((term) => text.includes(term))) return "AI Brain";
   if (datingTerms.some((term) => text.includes(term))) return "Dating Brain";
-  if (fitnessTerms.some((term) => text.includes(term))) return "Fitness/Food Brain";
+  if (fitnessTerms.some((term) => text.includes(term))) return "Health/Fitness/Food Brain";
   return "General";
 }
 
@@ -99,9 +140,9 @@ export function generateBrainReply(
       .join("\n");
   }
 
-  if (category === "Fitness/Food Brain") {
+  if (category === "Health/Fitness/Food Brain") {
     return [
-      "Fitness/Food Brain:",
+      "Health/Fitness/Food Brain:",
       "Make this practical for the next 24 hours.",
       "Prioritize protein, sleep, recovery, boxing/training quality, and simple food choices before supplements or complicated protocols.",
       "Next action: choose one meal or workout adjustment you can actually do today.",

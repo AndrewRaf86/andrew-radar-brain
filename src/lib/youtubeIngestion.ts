@@ -1,7 +1,7 @@
 export type YouTubeBrainCategory =
   | "AI Brain"
   | "Dating Brain"
-  | "Fitness/Food Brain";
+  | "Health/Fitness/Food Brain";
 
 export type YouTubeChannel = {
   id?: string;
@@ -70,11 +70,11 @@ export function classifyVideoText(input: string): YouTubeBrainCategory {
     return "Dating Brain";
   }
   if (
-    /workout|gym|boxing|protein|calories|supplement|gut|food|recipe|meal|recovery|sleep|fat loss|muscle|stomach|diet/.test(
+    /health|fitness|workout|gym|boxing|footwork|cardio|protein|calories|supplement|gut|food|recipe|meal|meal prep|high protein|recovery|sleep|fat loss|muscle|nutrition|cooking|stomach|diet|mobility|pain|training|conditioning|longevity|hormones|peptides/.test(
       text,
     )
   ) {
-    return "Fitness/Food Brain";
+    return "Health/Fitness/Food Brain";
   }
   return "AI Brain";
 }

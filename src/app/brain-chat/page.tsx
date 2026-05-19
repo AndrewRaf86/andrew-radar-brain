@@ -16,7 +16,7 @@ const brainOptions: BrainMode[] = [
   "Auto",
   "AI Brain",
   "Dating Brain",
-  "Fitness/Food Brain",
+  "Health/Fitness/Food Brain",
 ];
 
 const intentOptions: ChatIntent[] = [
@@ -172,7 +172,7 @@ export default function BrainChatPage() {
             Brain Chat
           </h1>
           <p className="mt-4 text-lg leading-8 text-zinc-400">
-            Talk to AI Brain, Dating Brain, and Fitness/Food Brain with local mock intelligence until the real AI layer is connected.
+            Talk to AI Brain, Dating Brain, and Health/Fitness/Food Brain with local mock intelligence until the real AI layer is connected.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -493,8 +493,8 @@ function toCaptureIntent(intent: ChatIntent): CaptureIntent {
 
 function toCaptureCategory(brainMode: BrainMode): CaptureInputCategory {
   if (brainMode === "AI Brain") return "AI Brain";
-  if (brainMode === "Dating Brain") return "Dating";
-  if (brainMode === "Fitness/Food Brain") return "Fitness/Food";
+  if (brainMode === "Dating Brain") return "Dating Brain";
+  if (brainMode === "Health/Fitness/Food Brain") return "Health/Fitness/Food Brain";
   return "Auto";
 }
 

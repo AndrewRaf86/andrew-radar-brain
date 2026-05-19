@@ -22,6 +22,8 @@ export type YouTubeRssVideo = {
 export type ChannelScanResult = {
   channelId: string;
   channelName: string;
+  channelResolved: boolean;
+  skipped: boolean;
   videosFound: number;
   videosInserted: number;
   skippedDuplicates: number;
@@ -30,6 +32,43 @@ export type ChannelScanResult = {
 
 export function buildYouTubeRssUrl(channelId: string) {
   return `https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`;
+}
+
+export async function resolveYouTubeChannelIdFromUrl(
+  url: string,
+): Promise<string | null> {
+  const channelMatch = url.match(/youtube\.com\/channel\/(UC[a-zA-Z0-9_-]+)/);
+  if (channelMatch?.[1]) return channelMatch[1];
+
+  if (!url.includes("youtube.com/@")) return null;
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "user-agent":
+          "Mozilla/5.0 (compatible; AndrewRadarBrain/1.0; +https://andrew-radar-brain.vercel.app)",
+      },
+      next: { revalidate: 86400 },
+    });
+
+    if (!response.ok) return null;
+    const html = await response.text();
+    const patterns = [
+      /"channelId":"(UC[a-zA-Z0-9_-]+)"/,
+      /"externalId":"(UC[a-zA-Z0-9_-]+)"/,
+      /<meta[^>]+itemprop=["']channelId["'][^>]+content=["'](UC[a-zA-Z0-9_-]+)["']/,
+      /"browseId":"(UC[a-zA-Z0-9_-]+)"/,
+    ];
+
+    for (const pattern of patterns) {
+      const match = html.match(pattern);
+      if (match?.[1]) return match[1];
+    }
+  } catch (error) {
+    console.error("YouTube handle resolution failed", { url, error });
+  }
+
+  return null;
 }
 
 export async function fetchYouTubeRssFeed(rssUrl: string) {
@@ -71,18 +110,32 @@ export async function scanChannelForVideos(
   const errors: string[] = [];
   let videosInserted = 0;
   let skippedDuplicates = 0;
-  const rssUrl =
-    channel.rss_url ||
-    (channel.yt_channel_id ? buildYouTubeRssUrl(channel.yt_channel_id) : null);
+  let resolvedChannelId = channel.yt_channel_id ?? null;
+  let rssUrl = channel.rss_url ?? null;
+  let channelResolved = Boolean(resolvedChannelId || rssUrl);
+
+  if (!resolvedChannelId && !rssUrl && channel.url) {
+    resolvedChannelId = await resolveYouTubeChannelIdFromUrl(channel.url);
+    if (resolvedChannelId) {
+      rssUrl = buildYouTubeRssUrl(resolvedChannelId);
+      channelResolved = true;
+    }
+  }
+
+  if (!rssUrl && resolvedChannelId) {
+    rssUrl = buildYouTubeRssUrl(resolvedChannelId);
+  }
 
   if (!rssUrl) {
     return {
       channelId: channel.id,
       channelName: channel.name,
+      channelResolved: false,
+      skipped: true,
       videosFound: 0,
       videosInserted: 0,
       skippedDuplicates: 0,
-      errors: ["Channel has no yt_channel_id or rss_url."],
+      errors: ["Channel has no yt_channel_id, rss_url, or resolvable url."],
     };
   }
 
@@ -94,6 +147,8 @@ export async function scanChannelForVideos(
       return {
         channelId: channel.id,
         channelName: channel.name,
+        channelResolved,
+        skipped: true,
         videosFound: videos.length,
         videosInserted: 0,
         skippedDuplicates: 0,
@@ -101,10 +156,10 @@ export async function scanChannelForVideos(
       };
     }
 
-    if (!channel.rss_url && channel.yt_channel_id) {
+    if (resolvedChannelId && (!channel.yt_channel_id || !channel.rss_url)) {
       await supabase
         .from("youtube_channels")
-        .update({ rss_url: rssUrl })
+        .update({ yt_channel_id: resolvedChannelId, rss_url: rssUrl })
         .eq("id", channel.id);
     }
 
@@ -117,6 +172,7 @@ export async function scanChannelForVideos(
         url: video.url,
         category: channel.category,
         published_at: video.published_at,
+        ingested_at: new Date().toISOString(),
       });
 
       if (!error) {
@@ -139,6 +195,8 @@ export async function scanChannelForVideos(
     return {
       channelId: channel.id,
       channelName: channel.name,
+      channelResolved,
+      skipped: false,
       videosFound: videos.length,
       videosInserted,
       skippedDuplicates,
@@ -149,6 +207,8 @@ export async function scanChannelForVideos(
     return {
       channelId: channel.id,
       channelName: channel.name,
+      channelResolved,
+      skipped: false,
       videosFound: 0,
       videosInserted: 0,
       skippedDuplicates: 0,
@@ -162,9 +222,11 @@ export async function scanAllActiveChannels() {
     return {
       ok: false,
       channelsScanned: 0,
+      channelsResolved: 0,
       videosFound: 0,
       videosInserted: 0,
       skippedDuplicates: 0,
+      skippedChannels: 0,
       errors: ["Supabase env vars are missing."],
     };
   }
@@ -173,9 +235,11 @@ export async function scanAllActiveChannels() {
     return {
       ok: false,
       channelsScanned: 0,
+      channelsResolved: 0,
       videosFound: 0,
       videosInserted: 0,
       skippedDuplicates: 0,
+      skippedChannels: 0,
       errors: ["Supabase client is not initialized."],
     };
   }
@@ -190,9 +254,11 @@ export async function scanAllActiveChannels() {
     return {
       ok: false,
       channelsScanned: 0,
+      channelsResolved: 0,
       videosFound: 0,
       videosInserted: 0,
       skippedDuplicates: 0,
+      skippedChannels: 0,
       errors: ["Could not read youtube_channels."],
     };
   }
@@ -205,12 +271,14 @@ export async function scanAllActiveChannels() {
   return {
     ok: true,
     channelsScanned: results.length,
+    channelsResolved: results.filter((result) => result.channelResolved).length,
     videosFound: results.reduce((sum, result) => sum + result.videosFound, 0),
     videosInserted: results.reduce((sum, result) => sum + result.videosInserted, 0),
     skippedDuplicates: results.reduce(
       (sum, result) => sum + result.skippedDuplicates,
       0,
     ),
+    skippedChannels: results.filter((result) => result.skipped).length,
     errors: results.flatMap((result) =>
       result.errors.map((error) => `${result.channelName}: ${error}`),
     ),

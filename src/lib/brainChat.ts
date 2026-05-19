@@ -2,7 +2,7 @@ export type BrainMode =
   | "Auto"
   | "AI Brain"
   | "Dating Brain"
-  | "Fitness/Food Brain"
+  | "Health/Fitness/Food Brain"
   | "General Signal";
 
 export type ChatIntent =
@@ -81,6 +81,8 @@ const datingTerms = [
 
 const fitnessTerms = [
   "workout",
+  "health",
+  "fitness",
   "food",
   "protein",
   "gut",
@@ -97,6 +99,19 @@ const fitnessTerms = [
   "stomach",
   "digestion",
   "soreness",
+  "nutrition",
+  "cooking",
+  "mobility",
+  "pain",
+  "training",
+  "conditioning",
+  "longevity",
+  "hormones",
+  "peptides",
+  "meal prep",
+  "high protein",
+  "footwork",
+  "cardio",
 ];
 
 export function detectBrainMode(
@@ -111,7 +126,7 @@ export function detectBrainMode(
   if (aiTerms.some((term) => normalized.includes(term))) return "AI Brain";
   if (datingTerms.some((term) => normalized.includes(term))) return "Dating Brain";
   if (fitnessTerms.some((term) => normalized.includes(term))) {
-    return "Fitness/Food Brain";
+    return "Health/Fitness/Food Brain";
   }
 
   return "General Signal";
@@ -204,11 +219,11 @@ export function generateMockChatResponse({
     };
   }
 
-  if (brainUsed === "Fitness/Food Brain") {
+  if (brainUsed === "Health/Fitness/Food Brain") {
     const shortAnswer =
       "Make this practical: one food choice, one training choice, or one recovery choice for the next 24 hours.";
     const whatItMeans =
-      "This belongs in the Fitness/Food Brain if it changes behavior around protein, sleep, boxing, workouts, gut health, calories, recovery, or supplements. Do not treat it like a diagnosis. If it is a health concern, confirm with a doctor.";
+      "This belongs in the Health/Fitness/Food Brain if it changes behavior around protein, sleep, boxing, workouts, gut health, calories, recovery, or supplements. Do not treat it like a diagnosis. If it is a health concern, confirm with a doctor.";
     const recommendedNextMove =
       intent === "Action Plan"
         ? "Pick one next action: prep a protein anchor, adjust the workout, improve sleep, or remove the supplement/noise for now."
@@ -237,7 +252,7 @@ export function generateMockChatResponse({
   const shortAnswer =
     "This is a general signal for now. Save it lightly and wait for a clearer pattern.";
   const whatItMeans =
-    "It does not strongly map to AI, Dating, or Fitness/Food yet. That is fine. The job is to keep the note without letting it become mental clutter.";
+    "It does not strongly map to AI, Dating, or Health/Fitness/Food yet. That is fine. The job is to keep the note without letting it become mental clutter.";
   const recommendedNextMove =
     "Add one sentence about why it might matter, then only revisit it if it connects to a decision or repeated pattern.";
 

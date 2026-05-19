@@ -8,13 +8,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 <claude-mem-context>
 # Memory Context
 
-# [andrew-radar-brain] recent context, 2026-05-19 3:27pm GMT-5
+# [andrew-radar-brain] recent context, 2026-05-19 3:43pm GMT-5
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 27 obs (13,324t read) | 624,231t work | 98% savings
+Stats: 29 obs (14,239t read) | 632,243t work | 98% savings
 
 ### May 19, 2026
 124 11:38a ⚖️ Andrew Radar Brain — v1 Architecture and Scope Defined
@@ -44,6 +44,8 @@ Stats: 27 obs (13,324t read) | 624,231t work | 98% savings
 192 " 🟣 Andrew Radar Brain — SQL Schema, YouTube Brain Page, and Nav Tab Added
 193 " ✅ Andrew Radar Brain — README Fully Rewritten for Telegram-First Architecture
 194 3:22p 🔵 Andrew Radar Brain — Full Build Passes, Smoke Tests Confirm API Behavior
+199 3:29p 🟣 Andrew Radar Brain — youtubeRss.ts Created as Upgraded RSS Scanning Lib
+200 " 🔴 Andrew Radar Brain — brainSearch.ts Field Rename and Error Handling Improvements
 
-Access 624k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 632k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>

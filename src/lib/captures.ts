@@ -68,8 +68,8 @@ export function classifyCapture(
 
   const text = input.toLowerCase();
   if (aiTerms.some((term) => text.includes(term))) return "AI Brain";
-  if (datingTerms.some((term) => text.includes(term))) return "Dating";
-  if (fitnessTerms.some((term) => text.includes(term))) return "Fitness/Food";
+  if (datingTerms.some((term) => text.includes(term))) return "Dating Brain";
+  if (fitnessTerms.some((term) => text.includes(term))) return "Health/Fitness/Food Brain";
   return "General Signal";
 }
 
@@ -98,7 +98,7 @@ export function generateMockBrainResponse({
           ? "Turn it into one small test with an input, output, and success check."
           : "Save the pattern, decide whether it is useful this week, and avoid adding infrastructure before the manual version is clear.",
     },
-    Dating: {
+    "Dating Brain": {
       meaning:
         "This looks like a communication, attraction, relationship, or field-notes signal. The useful part is the behavioral pattern, not over-analysis.",
       recommendedAction:
@@ -106,7 +106,7 @@ export function generateMockBrainResponse({
           ? "Write the shortest calm reply that moves the interaction forward, then watch the response."
           : "Convert it into one simple reminder about pace, standards, or clear leadership.",
     },
-    "Fitness/Food": {
+    "Health/Fitness/Food Brain": {
       meaning:
         "This looks like a training, food, gut health, recovery, or body-composition signal. It matters if it changes this week's behavior.",
       recommendedAction:

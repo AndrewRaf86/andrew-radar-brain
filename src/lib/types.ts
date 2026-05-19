@@ -23,8 +23,8 @@ export type RadarVideo = {
 
 export type CaptureCategory =
   | "AI Brain"
-  | "Dating"
-  | "Fitness/Food"
+  | "Dating Brain"
+  | "Health/Fitness/Food Brain"
   | "General Signal";
 
 export type CaptureIntent =
@@ -37,8 +37,8 @@ export type CaptureIntent =
 export type CaptureInputCategory =
   | "Auto"
   | "AI Brain"
-  | "Dating"
-  | "Fitness/Food";
+  | "Dating Brain"
+  | "Health/Fitness/Food Brain";
 
 export type BrainResponse = {
   detectedCategory: CaptureCategory;

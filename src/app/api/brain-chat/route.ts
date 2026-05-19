@@ -9,7 +9,7 @@ const brainModes: BrainMode[] = [
   "Auto",
   "AI Brain",
   "Dating Brain",
-  "Fitness/Food Brain",
+  "Health/Fitness/Food Brain",
   "General Signal",
 ];
 

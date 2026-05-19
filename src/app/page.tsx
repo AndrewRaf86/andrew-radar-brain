@@ -23,7 +23,7 @@ export default function Home() {
           Andrew Radar Brain
         </h1>
         <p className="mt-4 text-lg leading-8 text-zinc-400">
-          AI, Dating, and Fitness/Food intelligence from my YouTube world.
+          AI, Dating, and Health/Fitness/Food intelligence from my YouTube world.
         </p>
       </section>
 
@@ -31,7 +31,7 @@ export default function Home() {
         <StatCard label="Total tracked channels" value={channels.length} />
         <StatCard label="AI channels" value={aiChannels.length} />
         <StatCard label="Dating channels" value={datingChannels.length} />
-        <StatCard label="Fitness/Food channels" value={fitnessChannels.length} />
+        <StatCard label="Health/Fitness/Food channels" value={fitnessChannels.length} />
         <StatCard label="Mock videos processed" value={mockVideos.length} />
       </section>
 
@@ -53,7 +53,7 @@ export default function Home() {
           topInsight="The repeated pattern is calm leadership with matched investment."
         />
         <BrainCard
-          title="Fitness/Food Brain"
+          title="Health/Fitness/Food Brain"
           description="Training, food, boxing, longevity, gut health, meal prep, supplements, and recovery."
           href="/fitness-food"
           channelCount={fitnessChannels.length}

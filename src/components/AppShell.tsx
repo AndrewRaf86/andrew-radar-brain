@@ -8,7 +8,7 @@ const navItems = [
   { href: "/", label: "Dashboard" },
   { href: "/ai-brain", label: "AI Brain" },
   { href: "/dating", label: "Dating" },
-  { href: "/fitness-food", label: "Fitness/Food" },
+  { href: "/fitness-food", label: "Health/Fitness/Food" },
   { href: "/brain-chat", label: "Brain Chat" },
   { href: "/youtube-brain", label: "YouTube Brain" },
   { href: "/inbox", label: "Inbox" },

@@ -79,5 +79,17 @@ alter table brain_queries enable row level security;
 -- youtube_channels
 -- youtube_videos
 --
+-- Category cleanup helper:
+update youtube_channels
+set category = 'Health/Fitness/Food Brain'
+where category in (
+  'Fitness/Food Brain',
+  'Fitness Brain',
+  'Health Brain',
+  'Boxing Brain',
+  'Boxing',
+  'Fitness/Food'
+);
+
 -- Do not create unsafe public policies.
 -- Do not use a service role key in the frontend.

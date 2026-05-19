@@ -18,7 +18,7 @@ const reports = [
     ],
   },
   {
-    title: "Fitness/Food Action Plan",
+    title: "Health/Fitness/Food Action Plan",
     bullets: [
       "Training focus for the next seven days",
       "Two meals to prep before the week starts",

@@ -40,7 +40,7 @@ function normalizeCategory(value: string): BrainCategory {
   if (
     value === "AI Brain" ||
     value === "Dating Brain" ||
-    value === "Fitness/Food Brain" ||
+    value === "Health/Fitness/Food Brain" ||
     value === "General"
   ) {
     return value;
