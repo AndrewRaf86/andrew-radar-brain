@@ -1,14 +1,26 @@
 # Andrew Radar Brain
 
-Andrew Radar Brain is a private personal intelligence dashboard for organizing YouTube, message, idea, fitness, food, and workflow signals into three brains:
+Andrew Radar Brain is now a Telegram-first personal AI brain. The main interface is a Telegram bot that Andrew can message from his phone. The long-term knowledge layer is selected YouTube channels across:
 
 - AI Brain
 - Dating Brain
 - Fitness/Food Brain
 
-The app is intentionally local-first right now. It has a polished Next.js dashboard, mock channel/video data, conversational Brain Chat, local browser memory, and Supabase/Telegram-ready structure without paid AI calls, auth, or a large backend.
+The goal is to ask the bot questions and eventually get answers from saved YouTube transcripts, summaries, and searchable knowledge.
 
-## How to run locally
+## Current Version
+
+- Telegram webhook can receive and reply to text messages when `TELEGRAM_BOT_TOKEN` is configured.
+- Telegram webhook parses photo and voice metadata.
+- Photo understanding is not active yet.
+- Voice transcription is not active yet.
+- Brain routing is local/mock and does not use a paid AI API.
+- Supabase schema is ready for conversations, YouTube channels, videos, chunks, and queries.
+- YouTube RSS scan foundation exists.
+- Transcript extraction is not active yet.
+- Search is simple text matching before embeddings/vector search.
+
+## Run Locally
 
 ```bash
 npm install
@@ -24,65 +36,56 @@ npm run lint
 npm run build
 ```
 
-## How Brain Chat works now
-
-Open `/brain-chat` and paste or type a signal: screenshot context, dating messages, WhatsApp or Bumble/Tinder messages, AI tool ideas, business problems, YouTube links, transcript notes, fitness notes, food notes, gut health notes, workout notes, or supplement notes.
-
-Brain Chat is currently a mock conversational system:
-
-- It detects the best brain with keyword rules.
-- It generates a conversational local response.
-- It saves the user message and assistant response in browser memory.
-- It saves useful captures through `src/lib/captures.ts`.
-- It does not call a paid AI API yet.
-
-The shared chat logic lives in `src/lib/brainChat.ts`. The web page uses it directly, and the future API routes use it too.
-
-## LocalStorage chat memory
-
-Chat history is saved in browser `localStorage` under:
-
-```text
-andrew-radar-brain-chat
-```
-
-Recent captures are saved under:
-
-```text
-andrew-radar-brain-captures
-```
-
-The `Clear chat` button clears only chat history. It does not delete recent captures.
-
-## Image uploads now
-
-Brain Chat accepts image files from the upload button. It shows the selected filename and a small preview when the browser can read the image.
-
-The uploaded filename is stored with the local chat message. Image understanding is mocked until an AI vision API is connected, so the app does not actually inspect the image contents yet.
-
-## Future Telegram Bot Plan
-
-Telegram is scaffolded but not active.
+## Telegram Bot Setup
 
 1. Create a Telegram bot with BotFather.
-2. Add `TELEGRAM_BOT_TOKEN` to Vercel environment variables.
-3. Use the Vercel deployed URL plus `/api/telegram/webhook` as the webhook endpoint.
-4. Later the webhook will save incoming Telegram messages to Supabase captures.
-5. Later the webhook will send AI responses back to Telegram.
+2. Copy the bot token.
+3. Add the token to Vercel environment variables:
 
-Current route:
+```bash
+TELEGRAM_BOT_TOKEN=your-telegram-token
+```
+
+4. Set the webhook to your deployed Vercel URL:
+
+```bash
+https://api.telegram.org/botYOUR_TOKEN/setWebhook?url=https://YOUR_VERCEL_DOMAIN/api/telegram/webhook
+```
+
+5. Send the bot a Telegram message.
+
+The webhook route is:
 
 ```text
 src/app/api/telegram/webhook/route.ts
 ```
 
-It accepts Telegram-like POST payloads, extracts message text, runs the same local mock brain response, and returns JSON. It does not call Telegram APIs or require a token yet.
+It sends a Telegram reply with `sendMessage`. If `TELEGRAM_BOT_TOKEN` is missing, the route returns a safe error and does not expose secrets.
 
-## Future Supabase Plan
+## YouTube Brain
 
-The Supabase browser client is in `src/lib/supabase.ts` and safely exports `null` when env vars are missing.
+The YouTube Brain is the knowledge layer for selected channels. It will eventually contain channel metadata, videos, transcripts, summaries, chunks, and search results.
 
-Later, add these public client env vars:
+Simple setup flow:
+
+1. Run `PERSONAL_BRAIN_SCHEMA.sql` in Supabase.
+2. Add rows to `youtube_channels`.
+3. Run `POST /api/youtube/scan`.
+4. Add transcripts manually for now.
+5. Run `POST /api/youtube/summarize`.
+6. Ask from Telegram or search with `POST /api/brain/search`.
+
+The simple page `/youtube-brain` explains this flow in the app.
+
+## Supabase Plan
+
+The Supabase browser client is in:
+
+```text
+src/lib/supabase.ts
+```
+
+Add public client env vars when ready:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
@@ -91,31 +94,63 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
 Do not put a Supabase service role key in the frontend.
 
-Schema drafts:
+Schemas:
 
-- `SUPABASE_SCHEMA.sql` for channels, videos, insights, and reports.
-- `CAPTURES_SCHEMA.sql` for captures.
+- `PERSONAL_BRAIN_SCHEMA.sql`: Telegram conversations and YouTube knowledge tables.
+- `SUPABASE_SCHEMA.sql`: older dashboard-ready tables.
+- `CAPTURES_SCHEMA.sql`: local/web capture table draft.
 
-Captures can later be inserted from web Brain Chat, Telegram webhook, future YouTube transcript ingestion, and future mobile capture tools. Row level security is enabled in the SQL drafts, but safe private-user policies must be added before public use.
+RLS is enabled in schema files. Add safe private-user policies before public use.
 
-## Future AI API Plan
+## Test Endpoints
 
-The mock response function is `generateMockChatResponse()` in `src/lib/brainChat.ts`.
+Health:
 
-Later, replace the mock logic with a server-side AI call from an API route. Keep private AI keys server-side only. The page can keep the same response shape and UI while the backend switches from local rules to real model responses.
-
-The dormant web API route is:
-
-```text
-src/app/api/brain-chat/route.ts
+```bash
+curl https://YOUR_VERCEL_DOMAIN/api/health
 ```
 
-It already accepts text, selected brain, intent, and optional image filename, then returns a mock brain response as JSON.
+Telegram webhook locally or with a test payload:
 
-## Deploy to Vercel
+```bash
+curl -X POST http://localhost:3000/api/telegram/webhook \
+  -H "content-type: application/json" \
+  -d '{"message":{"chat":{"id":"123"},"from":{"id":"456"},"text":"Claude Codex workflow for YouTube transcripts"}}'
+```
 
-1. Push the repo to GitHub.
-2. Import the repo in Vercel.
-3. Use the default Next.js build settings.
-4. Add Supabase or Telegram env vars only when those features are ready.
-5. Deploy.
+YouTube RSS scan:
+
+```bash
+curl -X POST http://localhost:3000/api/youtube/scan
+```
+
+Brain search:
+
+```bash
+curl -X POST http://localhost:3000/api/brain/search \
+  -H "content-type: application/json" \
+  -d '{"query":"What should I learn about AI agents?","category":"AI Brain"}'
+```
+
+Mock summarization:
+
+```bash
+curl -X POST http://localhost:3000/api/youtube/summarize \
+  -H "content-type: application/json" \
+  -d '{"title":"Example video","notes":"Manual transcript notes","category":"AI Brain"}'
+```
+
+## Future Steps
+
+1. Add Gemini Flash API for real responses and summaries.
+2. Add real Supabase conversation writes with proper RLS policies.
+3. Add YouTube transcript extraction.
+4. Add embeddings/vector search.
+5. Add daily cron ingestion.
+6. Add Telegram daily digest.
+7. Add image vision.
+8. Add voice transcription.
+
+## Existing App
+
+The existing dashboard pages and `/brain-chat` still exist. They are no longer the main product focus; Telegram is now the primary interface.

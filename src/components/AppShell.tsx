@@ -10,6 +10,7 @@ const navItems = [
   { href: "/dating", label: "Dating" },
   { href: "/fitness-food", label: "Fitness/Food" },
   { href: "/brain-chat", label: "Brain Chat" },
+  { href: "/youtube-brain", label: "YouTube Brain" },
   { href: "/inbox", label: "Inbox" },
   { href: "/reports", label: "Reports" },
 ];
