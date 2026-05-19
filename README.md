@@ -9,6 +9,7 @@ Andrew Radar Brain is a Telegram-first personal AI brain. Telegram is the main i
 ## Current Status
 
 - Telegram webhook receives messages and sends replies when `TELEGRAM_BOT_TOKEN` is set.
+- Telegram uses Gemini first, then OpenAI, then the local mock fallback if no AI key is available.
 - Telegram parses text, captions, photo metadata, and voice metadata.
 - YouTube RSS ingestion now scans Supabase `youtube_channels` rows and saves new video metadata into `youtube_videos`.
 - Search uses simple text matching against saved `youtube_videos`.
@@ -76,9 +77,15 @@ Required environment variables:
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+TELEGRAM_BOT_TOKEN=your-telegram-token
+GEMINI_API_KEY=your-gemini-key
+OPENAI_API_KEY=your-openai-key
 ```
 
-Do not put a Supabase service role key in the frontend.
+`/api/youtube/scan`, `/api/brain/search`, and server-side conversation writes use `SUPABASE_SERVICE_ROLE_KEY` on the server only. Do not import `src/lib/supabaseServer.ts` into client components, and do not put the service role key in browser code.
+
+Telegram responses prefer `GEMINI_API_KEY` with Gemini Flash. If Gemini is unavailable, they fall back to `OPENAI_API_KEY` with `gpt-4o-mini`. If neither key exists, Telegram falls back to the local mock reply.
 
 ## YouTube Brain Setup
 
@@ -144,7 +151,7 @@ The endpoint returns:
 - `skippedDuplicates`
 - `errors`
 
-Current limitation: this only saves video metadata. Transcript extraction is next. AI summaries are next. Vector search/RAG is next.
+Current limitation: this only saves video metadata. Transcript extraction and embeddings come later.
 
 ## Brain Search Limitation
 
@@ -154,7 +161,7 @@ Telegram works now, but YouTube knowledge only works after:
 2. `youtube_channels` has real channel IDs or RSS URLs.
 3. `/api/youtube/scan` has saved videos into `youtube_videos`.
 
-If no saved videos exist, Telegram still gives a general answer and says saved video knowledge is not connected yet. Telegram can answer generally now, but it will only answer from saved YouTube knowledge after videos and transcripts/summaries are stored.
+If no saved videos exist, Telegram still gives a general AI answer. It will only answer from saved YouTube knowledge after videos and transcripts/summaries are stored.
 
 ## Useful Test Endpoints
 

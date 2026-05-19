@@ -5,6 +5,7 @@ import {
   type BrainCategory,
 } from "@/lib/brainRouter";
 import { searchBrainKnowledge } from "@/lib/brainSearch";
+import { generateBrainAnswer } from "@/lib/aiClient";
 import {
   saveConversationMock,
   saveConversationSupabaseReady,
@@ -95,10 +96,15 @@ async function buildTelegramReply({
 
     if (text) {
       const search = await safeSearchBrainKnowledge(text, brainUsed);
+      const aiAnswer = await generateBrainAnswer({
+        message: text,
+        category: brainUsed,
+        savedVideoContext: search.savedVideoContext,
+      });
       return [
         ...base,
         "I can still use your caption:",
-        search.answer,
+        aiAnswer,
       ].join("\n");
     }
 
@@ -110,7 +116,11 @@ async function buildTelegramReply({
 
   if (inputType === "text" && text) {
     const search = await safeSearchBrainKnowledge(text, brainUsed);
-    return search.answer;
+    return generateBrainAnswer({
+      message: text,
+      category: brainUsed,
+      savedVideoContext: search.savedVideoContext,
+    });
   }
 
   return generateBrainReply(text || "Unknown Telegram input", brainUsed);
@@ -140,6 +150,7 @@ async function safeSearchBrainKnowledge(query: string, category: BrainCategory) 
       category,
       hasSupabase: false,
       searchFailed: true,
+      savedVideoContext: "",
     };
   }
 }

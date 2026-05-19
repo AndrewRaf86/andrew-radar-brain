@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type YouTubeRssChannel = {
   id: string;
@@ -28,6 +28,21 @@ export type ChannelScanResult = {
   videosInserted: number;
   skippedDuplicates: number;
   errors: string[];
+};
+
+export type ScanAllActiveChannelsResult = {
+  ok: boolean;
+  hasSupabaseUrl: boolean;
+  hasServiceRoleKey: boolean;
+  channelsQueryCount: number;
+  channelsScanned: number;
+  channelsResolved: number;
+  videosFound: number;
+  videosInserted: number;
+  skippedDuplicates: number;
+  skippedChannels: number;
+  errors: string[];
+  message?: string;
 };
 
 export function buildYouTubeRssUrl(channelId: string) {
@@ -106,6 +121,7 @@ export function parseYouTubeRss(xml: string): YouTubeRssVideo[] {
 
 export async function scanChannelForVideos(
   channel: YouTubeRssChannel,
+  supabase: SupabaseClient,
 ): Promise<ChannelScanResult> {
   const errors: string[] = [];
   let videosInserted = 0;
@@ -143,19 +159,6 @@ export async function scanChannelForVideos(
     const xml = await fetchYouTubeRssFeed(rssUrl);
     const videos = parseYouTubeRss(xml);
 
-    if (!supabase) {
-      return {
-        channelId: channel.id,
-        channelName: channel.name,
-        channelResolved,
-        skipped: true,
-        videosFound: videos.length,
-        videosInserted: 0,
-        skippedDuplicates: 0,
-        errors: ["Supabase client is not initialized."],
-      };
-    }
-
     if (resolvedChannelId && (!channel.yt_channel_id || !channel.rss_url)) {
       await supabase
         .from("youtube_channels")
@@ -180,7 +183,11 @@ export async function scanChannelForVideos(
         continue;
       }
 
-      if (error.code === "23505" || /duplicate/i.test(error.message)) {
+      if (
+        error.code === "23505" ||
+        error.code === "409" ||
+        /duplicate|already exists/i.test(error.message)
+      ) {
         skippedDuplicates += 1;
       } else {
         console.error("youtube_videos insert failed", {
@@ -217,42 +224,27 @@ export async function scanChannelForVideos(
   }
 }
 
-export async function scanAllActiveChannels() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return {
-      ok: false,
-      channelsScanned: 0,
-      channelsResolved: 0,
-      videosFound: 0,
-      videosInserted: 0,
-      skippedDuplicates: 0,
-      skippedChannels: 0,
-      errors: ["Supabase env vars are missing."],
-    };
-  }
-
-  if (!supabase) {
-    return {
-      ok: false,
-      channelsScanned: 0,
-      channelsResolved: 0,
-      videosFound: 0,
-      videosInserted: 0,
-      skippedDuplicates: 0,
-      skippedChannels: 0,
-      errors: ["Supabase client is not initialized."],
-    };
-  }
-
+export async function scanAllActiveChannels({
+  supabase,
+  hasSupabaseUrl,
+  hasServiceRoleKey,
+}: {
+  supabase: SupabaseClient;
+  hasSupabaseUrl: boolean;
+  hasServiceRoleKey: boolean;
+}): Promise<ScanAllActiveChannelsResult> {
   const { data, error } = await supabase
     .from("youtube_channels")
-    .select("id,name,yt_channel_id,rss_url,url,category,priority,is_active")
+    .select("*")
     .eq("is_active", true);
 
   if (error) {
     console.error("youtube_channels scan query failed", error);
     return {
       ok: false,
+      hasSupabaseUrl,
+      hasServiceRoleKey,
+      channelsQueryCount: 0,
       channelsScanned: 0,
       channelsResolved: 0,
       videosFound: 0,
@@ -263,13 +255,35 @@ export async function scanAllActiveChannels() {
     };
   }
 
+  const channels = (data ?? []) as YouTubeRssChannel[];
+  if (!channels.length) {
+    return {
+      ok: true,
+      hasSupabaseUrl,
+      hasServiceRoleKey,
+      channelsQueryCount: 0,
+      channelsScanned: 0,
+      channelsResolved: 0,
+      videosFound: 0,
+      videosInserted: 0,
+      skippedDuplicates: 0,
+      skippedChannels: 0,
+      errors: [],
+      message:
+        "No active youtube_channels rows found. Confirm rows exist with is_active = true in the same Supabase project used by Vercel.",
+    };
+  }
+
   const results = [];
-  for (const channel of (data ?? []) as YouTubeRssChannel[]) {
-    results.push(await scanChannelForVideos(channel));
+  for (const channel of channels) {
+    results.push(await scanChannelForVideos(channel, supabase));
   }
 
   return {
     ok: true,
+    hasSupabaseUrl,
+    hasServiceRoleKey,
+    channelsQueryCount: channels.length,
     channelsScanned: results.length,
     channelsResolved: results.filter((result) => result.channelResolved).length,
     videosFound: results.reduce((sum, result) => sum + result.videosFound, 0),

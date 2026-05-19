@@ -1,5 +1,5 @@
 import { generateBrainReply, type BrainCategory } from "@/lib/brainRouter";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseServerClient } from "@/lib/supabaseServer";
 
 export type BrainSearchResult = {
   answer: string;
@@ -9,10 +9,14 @@ export type BrainSearchResult = {
     url: string;
     channel_name?: string;
     category?: string;
+    summary?: string;
+    takeaways?: string[];
+    action_items?: string[];
   }>;
   category: BrainCategory;
   hasSupabase: boolean;
   searchFailed?: boolean;
+  savedVideoContext: string;
 };
 
 type VideoRow = {
@@ -37,21 +41,28 @@ export async function searchBrainKnowledge({
   query: string;
   category: BrainCategory;
 }): Promise<BrainSearchResult> {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return {
       answer: `${generateBrainReply(query, category)}\n\n${noKnowledgeMessage}`,
       matchedVideos: [],
       category,
       hasSupabase: false,
+      savedVideoContext: "",
     };
   }
 
-  if (!supabase) {
+  let supabase;
+  try {
+    supabase = getSupabaseServerClient();
+  } catch (error) {
+    console.error("Supabase server client unavailable for brain search", error);
     return {
       answer: `${generateBrainReply(query, category)}\n\nSupabase is not initialized for saved video search yet.`,
       matchedVideos: [],
       category,
       hasSupabase: false,
+      searchFailed: true,
+      savedVideoContext: "",
     };
   }
 
@@ -73,6 +84,7 @@ export async function searchBrainKnowledge({
       category,
       hasSupabase: true,
       searchFailed: true,
+      savedVideoContext: "",
     };
   }
 
@@ -82,6 +94,7 @@ export async function searchBrainKnowledge({
       matchedVideos: [],
       category,
       hasSupabase: true,
+      savedVideoContext: "",
     };
   }
 
@@ -112,6 +125,9 @@ export async function searchBrainKnowledge({
       url: video.url,
       channel_name: video.channel_name,
       category: video.category,
+      summary: video.summary,
+      takeaways: video.takeaways,
+      action_items: video.action_items,
     }));
 
   const titles = matchedVideos.map((video) => `- ${video.title}`).join("\n");
@@ -124,5 +140,34 @@ export async function searchBrainKnowledge({
     matchedVideos,
     category,
     hasSupabase: true,
+    savedVideoContext: formatSavedVideoContext(matchedVideos),
   };
+}
+
+function formatSavedVideoContext(
+  videos: BrainSearchResult["matchedVideos"],
+) {
+  if (!videos.length) return "";
+
+  return videos
+    .map((video, index) => {
+      const takeaways = video.takeaways?.length
+        ? `\nTakeaways: ${video.takeaways.slice(0, 3).join("; ")}`
+        : "";
+      const actions = video.action_items?.length
+        ? `\nAction items: ${video.action_items.slice(0, 3).join("; ")}`
+        : "";
+      const summary = video.summary ? `\nSummary: ${video.summary}` : "";
+      return [
+        `${index + 1}. ${video.title}`,
+        video.channel_name ? `Channel: ${video.channel_name}` : "",
+        `URL: ${video.url}`,
+        summary,
+        takeaways,
+        actions,
+      ]
+        .filter(Boolean)
+        .join("\n");
+    })
+    .join("\n\n");
 }
