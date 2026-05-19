@@ -39,7 +39,23 @@ When no saved YouTube context exists:
 - Answer generally.
 - Say briefly that saved video knowledge is not connected yet only if relevant.
 
-Keep Telegram replies concise and easy to read.`;
+Keep Telegram replies concise and easy to read.
+
+Always use this exact format:
+Brain:
+[AI Brain / Dating Brain / Health/Fitness/Food Brain / General]
+
+Short answer:
+[direct answer]
+
+What it means:
+[plain English explanation]
+
+Next move:
+[one concrete action]
+
+Saved knowledge used:
+[video title or "none yet"]`;
 
 export async function generateBrainAnswer({
   message,
@@ -62,7 +78,7 @@ export async function generateBrainAnswer({
     }
   }
 
-  return generateBrainReply(message, category);
+  return formatMockAnswer({ message, category, savedVideoContext });
 }
 
 async function generateWithGemini({
@@ -157,4 +173,36 @@ function buildUserPrompt({
       : "Saved YouTube context: none connected for this question.",
     `Andrew's message:\n${message}`,
   ].join("\n\n");
+}
+
+function formatMockAnswer({
+  message,
+  category,
+  savedVideoContext,
+}: GenerateBrainAnswerInput) {
+  const savedTitle = savedVideoContext?.split("\n")[0]?.replace(/^\d+\.\s*/, "");
+  const shortAnswer = generateBrainReply(message, category)
+    .split("\n")
+    .filter(Boolean)
+    .slice(1, 3)
+    .join(" ");
+
+  return [
+    "Brain:",
+    category,
+    "",
+    "Short answer:",
+    shortAnswer || "Here is the practical read.",
+    "",
+    "What it means:",
+    savedVideoContext
+      ? "From saved video knowledge, this connects to a pattern you already captured."
+      : "No saved YouTube knowledge matched yet. I am answering generally.",
+    "",
+    "Next move:",
+    "Pick one concrete next action and save the result back into the brain.",
+    "",
+    "Saved knowledge used:",
+    savedTitle || "none yet",
+  ].join("\n");
 }

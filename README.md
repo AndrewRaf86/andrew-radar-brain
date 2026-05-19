@@ -87,6 +87,14 @@ OPENAI_API_KEY=your-openai-key
 
 Telegram responses prefer `GEMINI_API_KEY` with Gemini Flash. If Gemini is unavailable, they fall back to `OPENAI_API_KEY` with `gpt-4o-mini`. If neither key exists, Telegram falls back to the local mock reply.
 
+Temporary Supabase debug endpoint:
+
+```text
+/api/debug/supabase
+```
+
+It returns env-var presence, the masked Supabase host, `youtube_channels` count, three sample rows, and sanitized Supabase error fields. It never returns API keys.
+
 ## YouTube Brain Setup
 
 The app only tracks three useful brains:
@@ -152,6 +160,30 @@ The endpoint returns:
 - `errors`
 
 Current limitation: this only saves video metadata. Transcript extraction and embeddings come later.
+
+## Manual YouTube Knowledge
+
+The simplest working path is Telegram or manual API saves into `youtube_videos`.
+
+Manual add:
+
+```bash
+curl -X POST https://andrew-radar-brain.vercel.app/api/youtube/manual-add \
+  -H "content-type: application/json" \
+  -d '{"channel_name":"The AI Advantage","title":"Example video","url":"https://www.youtube.com/watch?v=test123","category":"AI Brain","summary":"Useful notes","takeaways":["Build the workflow manually first"]}'
+```
+
+Test insert:
+
+```bash
+curl https://andrew-radar-brain.vercel.app/api/youtube/test-add
+```
+
+Telegram behavior:
+
+- Send a YouTube link, title, transcript, or summary to save it.
+- Later ask a question.
+- The bot searches `youtube_videos` first, then answers with Gemini/OpenAI using the saved context.
 
 ## Brain Search Limitation
 

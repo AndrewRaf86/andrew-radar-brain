@@ -35,7 +35,6 @@ alter table youtube_channels enable row level security;
 
 create table if not exists youtube_videos (
   id uuid primary key default gen_random_uuid(),
-  channel_id uuid references youtube_channels(id),
   yt_video_id text unique,
   channel_name text,
   title text not null,

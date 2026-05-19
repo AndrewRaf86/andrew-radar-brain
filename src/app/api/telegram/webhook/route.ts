@@ -7,6 +7,11 @@ import {
 import { searchBrainKnowledge } from "@/lib/brainSearch";
 import { generateBrainAnswer } from "@/lib/aiClient";
 import {
+  extractFirstYouTubeUrl,
+  parseTelegramYouTubeSave,
+  saveYouTubeVideoManual,
+} from "@/lib/youtubeKnowledge";
+import {
   saveConversationMock,
   saveConversationSupabaseReady,
 } from "@/lib/brainStorage";
@@ -115,6 +120,14 @@ async function buildTelegramReply({
   }
 
   if (inputType === "text" && text) {
+    if (extractFirstYouTubeUrl(text)) {
+      const videoInput = parseTelegramYouTubeSave(text, brainUsed);
+      if (videoInput) {
+        await saveYouTubeVideoManual(videoInput);
+        return "Saved this video to your brain. Send me a question about it when ready.";
+      }
+    }
+
     const search = await safeSearchBrainKnowledge(text, brainUsed);
     return generateBrainAnswer({
       message: text,

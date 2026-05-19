@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { sanitizeSupabaseError } from "@/lib/supabaseServer";
 
 export type YouTubeRssChannel = {
   id: string;
@@ -43,6 +44,10 @@ export type ScanAllActiveChannelsResult = {
   skippedChannels: number;
   errors: string[];
   message?: string;
+  errorMessage?: string | null;
+  errorCode?: string | null;
+  errorDetails?: string | null;
+  errorHint?: string | null;
 };
 
 export function buildYouTubeRssUrl(channelId: string) {
@@ -240,6 +245,7 @@ export async function scanAllActiveChannels({
 
   if (error) {
     console.error("youtube_channels scan query failed", error);
+    const sanitizedError = sanitizeSupabaseError(error);
     return {
       ok: false,
       hasSupabaseUrl,
@@ -252,6 +258,7 @@ export async function scanAllActiveChannels({
       skippedDuplicates: 0,
       skippedChannels: 0,
       errors: ["Could not read youtube_channels."],
+      ...sanitizedError,
     };
   }
 
